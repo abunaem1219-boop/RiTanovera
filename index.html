@@ -1,0 +1,1438 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RiTanovera Store</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- PWA & iOS Safari Standard Meta Tags -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#6C63FF">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="RiTanovera">
+  <link rel="apple-touch-icon" href="https://i.ibb.co.com/FkgvKxY/ritanovera-icon.png">
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#6C63FF',
+            secondary: '#FF6584',
+            darkbg: '#0F0F1A',
+            cardbg: 'rgba(255, 255, 255, 0.05)',
+            bordercolor: 'rgba(255, 255, 255, 0.08)'
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Poppins', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #0F0F1A;
+      color: #FFFFFF;
+      font-family: 'Inter', sans-serif;
+    }
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    /* Hide scrollbars but allow scrolling */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    /* Skeleton Shimmer */
+    .shimmer {
+      background: linear-gradient(90deg, #151525 25%, #252540 50%, #151525 75%);
+      background-size: 200% 100%;
+      animation: loading-shimmer 1.5s infinite;
+    }
+    @keyframes loading-shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    /* Smooth transitions */
+    .tab-content {
+      transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    @keyframes pulse-slow {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.05); opacity: 0.8; }
+    }
+    .pulse-glow {
+      animation: pulse-slow 2s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="pb-24 overflow-x-hidden min-h-screen">
+
+  <!-- APP BAR / HEADER -->
+  <header class="glass-effect sticky top-0 z-40 px-4 py-3 flex items-center justify-between mx-3 mt-3 rounded-2xl">
+    <div class="flex items-center gap-2">
+      <div id="app-logo" class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center font-display font-bold text-white text-lg">R</div>
+      <span id="app-name" class="font-display font-bold text-lg tracking-wide">RiTanovera</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <button onclick="switchTab('cart')" class="relative p-2 rounded-full hover:bg-white/10 transition">
+        <i class="fa-solid fa-bag-shopping text-xl"></i>
+        <span id="cart-badge" class="absolute -top-1 -right-1 bg-secondary text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- SETUP OVERLAY PANEL (Shows only if Firebase config is missing) -->
+  <div id="setup-screen" class="fixed inset-0 bg-darkbg/95 z-50 flex items-center justify-center p-4 hidden">
+    <div class="glass-effect p-6 rounded-3xl w-full max-w-md">
+      <h2 class="font-display font-bold text-xl text-center mb-2">RiTanovera App Setup</h2>
+      <p class="text-sm text-gray-400 text-center mb-6">Enter your configuration settings. These are stored locally to initialize the dynamic dynamic database.</p>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold uppercase text-gray-400 mb-1">Firebase Configuration JSON</label>
+          <textarea id="setup-fb-json" rows="6" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-gray-300 focus:outline-none focus:border-primary" placeholder='{ "apiKey": "...", "projectId": "...", ... }'></textarea>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase text-gray-400 mb-1">ImgBB API Key</label>
+          <input id="setup-imgbb" type="text" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase text-gray-400 mb-1">Admin WhatsApp Number (with country code)</label>
+          <input id="setup-wa" type="text" placeholder="8801700000000" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary">
+        </div>
+        <button id="btn-save-setup" class="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-3 rounded-xl transition duration-300 shadow-lg shadow-primary/20">Save Configuration</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN TAB CONTENT CONTAINER -->
+  <main class="px-4 mt-6 max-w-7xl mx-auto">
+    
+    <!-- HOME TAB -->
+    <div id="tab-home" class="tab-content space-y-8">
+      <!-- Banner Hero Slider -->
+      <div id="hero-slider-container" class="relative overflow-hidden rounded-3xl h-[200px] md:h-[400px] w-full glass-effect">
+        <div id="shimmer-banner" class="shimmer absolute inset-0"></div>
+        <div id="slider-wrapper" class="flex h-full transition-transform duration-500 ease-out"></div>
+        <!-- Dot Indicators -->
+        <div id="slider-dots" class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2"></div>
+      </div>
+
+      <!-- Categories Scroll Strip -->
+      <div class="space-y-3">
+        <h3 class="font-display font-bold text-lg">Categories</h3>
+        <div id="shimmer-categories" class="flex gap-4 overflow-x-auto no-scrollbar py-2"></div>
+        <div id="categories-strip" class="flex gap-4 overflow-x-auto no-scrollbar py-2 hidden"></div>
+      </div>
+
+      <!-- Flash Sale Section -->
+      <div id="flash-sale-section" class="glass-effect p-4 rounded-3xl border border-secondary/20 hidden">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <span class="bg-secondary text-white text-xs font-bold px-2.5 py-1 rounded-lg uppercase tracking-wide">Sale</span>
+            <h3 id="flash-sale-title" class="font-display font-bold text-lg">Flash Deal</h3>
+          </div>
+          <!-- Countdown -->
+          <div id="flash-timer" class="flex items-center gap-1 font-mono text-sm font-semibold text-secondary">
+            <span id="days">00</span>d : <span id="hours">00</span>h : <span id="mins">00</span>m : <span id="secs">00</span>s
+          </div>
+        </div>
+        <div id="flash-products-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+      </div>
+
+      <!-- Main Products Grid -->
+      <div class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="font-display font-bold text-lg">Our Products</h3>
+          <span id="active-category-indicator" class="text-xs text-primary font-medium uppercase tracking-wider">All Products</span>
+        </div>
+        <div id="shimmer-products" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+        <div id="products-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4 hidden"></div>
+        <div class="flex justify-center pt-4">
+          <button id="btn-load-more" class="hidden px-6 py-2.5 rounded-xl border border-white/10 hover:border-primary/50 text-sm font-semibold transition glass-effect">Load More</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEARCH TAB -->
+    <div id="tab-search" class="tab-content hidden space-y-6">
+      <div class="relative">
+        <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+        <input id="search-input" type="text" placeholder="Search product name, category or tag..." class="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-12 py-4 text-sm focus:outline-none focus:border-primary transition">
+        <button id="btn-clear-search" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white hidden"><i class="fa-solid fa-circle-xmark"></i></button>
+      </div>
+      <!-- Filter Trigger -->
+      <div class="flex items-center justify-between">
+        <div id="search-stats" class="text-xs text-gray-400">Type above to search...</div>
+        <button id="btn-toggle-filters" class="flex items-center gap-2 text-xs font-semibold bg-white/5 px-3 py-2 rounded-xl border border-white/10 hover:border-primary transition"><i class="fa-solid fa-sliders"></i> Filters</button>
+      </div>
+
+      <!-- Advanced Filter Drawer -->
+      <div id="filter-drawer" class="glass-effect p-5 rounded-2xl hidden space-y-4">
+        <div>
+          <span class="block text-xs font-semibold text-gray-400 uppercase mb-2">Sort By</span>
+          <div class="grid grid-cols-2 gap-2">
+            <button class="sort-chip active bg-primary/20 text-primary border border-primary/40 px-3 py-2 rounded-xl text-xs font-semibold" data-sort="newest">Newest</button>
+            <button class="sort-chip bg-white/5 border border-white/10 px-3 py-2 rounded-xl text-xs font-semibold" data-sort="price-low">Price: Low-High</button>
+            <button class="sort-chip bg-white/5 border border-white/10 px-3 py-2 rounded-xl text-xs font-semibold" data-sort="price-high">Price: High-Low</button>
+            <button class="sort-chip bg-white/5 border border-white/10 px-3 py-2 rounded-xl text-xs font-semibold" data-sort="rating">Highest Rated</button>
+          </div>
+        </div>
+        <div>
+          <span class="block text-xs font-semibold text-gray-400 uppercase mb-2">Price Range</span>
+          <div class="flex items-center gap-3">
+            <input id="filter-min-price" type="number" placeholder="Min ৳" class="w-1/2 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs focus:outline-none">
+            <input id="filter-max-price" type="number" placeholder="Max ৳" class="w-1/2 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs focus:outline-none">
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <button id="btn-apply-filters" class="w-full bg-primary py-2.5 rounded-xl text-xs font-semibold">Apply Filters</button>
+          <button id="btn-reset-filters" class="w-1/3 bg-white/5 border border-white/10 py-2.5 rounded-xl text-xs font-semibold">Reset</button>
+        </div>
+      </div>
+
+      <!-- Search Results Grid -->
+      <div id="search-results-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+    </div>
+
+    <!-- CART TAB -->
+    <div id="tab-cart" class="tab-content hidden space-y-6">
+      <h3 class="font-display font-bold text-xl">Shopping Cart</h3>
+      <div id="cart-items-container" class="space-y-4"></div>
+      
+      <!-- Order Calculations -->
+      <div id="cart-summary-card" class="glass-effect p-5 rounded-3xl space-y-4 hidden">
+        <div class="space-y-2 text-sm border-b border-white/5 pb-4">
+          <div class="flex justify-between text-gray-400"><span>Subtotal</span><span id="summary-subtotal">৳0</span></div>
+          <div class="flex justify-between text-gray-400"><span>Delivery Charge</span><span id="summary-delivery">৳0</span></div>
+          <div id="coupon-row" class="flex justify-between text-emerald-400 hidden"><span>Discount (Coupon)</span><span id="summary-discount">-৳0</span></div>
+        </div>
+        
+        <!-- Coupon Form -->
+        <div class="flex gap-2">
+          <input id="coupon-input" type="text" placeholder="Promo Code" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm focus:outline-none">
+          <button id="btn-apply-coupon" class="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl text-sm font-semibold transition">Apply</button>
+        </div>
+
+        <div class="flex justify-between items-center font-display font-bold text-lg pt-2">
+          <span>Total</span>
+          <span id="summary-total" class="text-primary">৳0</span>
+        </div>
+        <button id="btn-checkout" class="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-4 rounded-2xl transition duration-300 shadow-lg shadow-primary/20 flex items-center justify-center gap-2"><i class="fa-brands fa-whatsapp text-lg"></i> Checkout via WhatsApp</button>
+      </div>
+      <div id="cart-empty-state" class="text-center py-12 space-y-4 hidden">
+        <i class="fa-solid fa-basket-shopping text-6xl text-gray-600"></i>
+        <p class="text-gray-400 text-sm">Your cart is currently empty.</p>
+        <button onclick="switchTab('home')" class="bg-primary px-6 py-2.5 rounded-xl text-sm font-semibold">Shop Now</button>
+      </div>
+    </div>
+
+    <!-- WISHLIST TAB -->
+    <div id="tab-wishlist" class="tab-content hidden space-y-6">
+      <h3 class="font-display font-bold text-xl">My Wishlist</h3>
+      <div id="wishlist-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+      <div id="wishlist-empty-state" class="text-center py-12 space-y-4 hidden">
+        <i class="fa-solid fa-heart-crack text-6xl text-gray-600"></i>
+        <p class="text-gray-400 text-sm">No items in your wishlist.</p>
+      </div>
+    </div>
+
+    <!-- CONTACT TAB -->
+    <div id="tab-contact" class="tab-content hidden space-y-6">
+      <div class="text-center space-y-2">
+        <div class="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center font-display font-bold text-white text-3xl mx-auto">R</div>
+        <h3 class="font-display font-bold text-xl">Contact Us</h3>
+        <p class="text-sm text-gray-400">Get in touch or follow us on social channels.</p>
+      </div>
+      <!-- Contact Cards -->
+      <div class="space-y-4">
+        <a id="contact-wa-link" href="#" target="_blank" class="flex items-center gap-4 glass-effect p-4 rounded-2xl border border-emerald-500/20 hover:bg-emerald-500/5 transition">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg"><i class="fa-brands fa-whatsapp"></i></div>
+          <div>
+            <span class="block font-semibold text-sm">Direct WhatsApp Chat</span>
+            <span id="contact-wa-num" class="text-xs text-gray-400">+8801XXXXXXXXX</span>
+          </div>
+        </a>
+        <div class="glass-effect p-4 rounded-2xl space-y-3">
+          <span class="block font-semibold text-sm border-b border-white/5 pb-2">Business Hours</span>
+          <p id="contact-hours" class="text-xs text-gray-400">9:00 AM - 10:00 PM (Daily)</p>
+          <span class="block font-semibold text-sm border-b border-white/5 pb-2 pt-2">Office Address</span>
+          <p id="contact-address" class="text-xs text-gray-400"> Dhaka, Bangladesh</p>
+        </div>
+      </div>
+      <!-- Social Buttons Grid -->
+      <div id="social-grid" class="grid grid-cols-3 gap-3"></div>
+    </div>
+
+  </main>
+
+  <!-- PRODUCT DETAIL SLIDE OVERLAY PANEL -->
+  <div id="product-detail-panel" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 transform translate-y-full transition-transform duration-300 ease-out flex items-end justify-center">
+    <div class="glass-effect w-full max-w-2xl max-h-[90vh] rounded-t-[32px] flex flex-col overflow-hidden">
+      <!-- Drag handle -->
+      <div class="w-12 h-1.5 bg-white/20 rounded-full mx-auto my-3 cursor-pointer" onclick="closeProductDetail()"></div>
+      <div class="overflow-y-auto no-scrollbar flex-1 px-6 pb-24 space-y-6">
+        <!-- Close button absolute -->
+        <button onclick="closeProductDetail()" class="absolute top-4 right-4 bg-white/10 hover:bg-white/20 w-8 h-8 rounded-full flex items-center justify-center transition"><i class="fa-solid fa-xmark"></i></button>
+        
+        <!-- Gallery Slider -->
+        <div class="relative w-full aspect-square rounded-2xl overflow-hidden glass-effect">
+          <div id="detail-slider-wrapper" class="flex h-full transition-transform duration-300"></div>
+          <div id="detail-slider-indicator" class="absolute bottom-3 right-3 bg-black/60 px-2.5 py-1 rounded-full text-xs font-semibold">1/1</div>
+        </div>
+        <!-- Gallery Thumbnails -->
+        <div id="detail-thumbnails" class="flex gap-2 overflow-x-auto no-scrollbar"></div>
+
+        <!-- Meta info -->
+        <div class="space-y-2">
+          <h2 id="detail-name" class="font-display font-bold text-xl md:text-2xl"></h2>
+          <div class="flex items-center gap-3">
+            <span id="detail-rating-stars" class="text-amber-400 text-sm"></span>
+            <span id="detail-review-count" class="text-xs text-gray-400"></span>
+            <span id="detail-stock-badge" class="text-xs px-2.5 py-0.5 rounded-full font-semibold"></span>
+          </div>
+          <div class="flex items-baseline gap-3 pt-2">
+            <span id="detail-price" class="text-2xl font-bold text-primary">৳0</span>
+            <span id="detail-orig-price" class="text-sm text-gray-400 line-through">৳0</span>
+            <span id="detail-discount-badge" class="bg-secondary text-white text-xs px-2 py-0.5 rounded-lg hidden"></span>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="space-y-1">
+          <span class="block text-xs font-semibold uppercase text-gray-400">Description</span>
+          <p id="detail-desc" class="text-sm text-gray-300 leading-relaxed"></p>
+        </div>
+
+        <!-- Specifications -->
+        <div id="detail-specs-section" class="space-y-2 hidden">
+          <span class="block text-xs font-semibold uppercase text-gray-400">Specifications</span>
+          <div id="detail-specs-table" class="border border-white/5 rounded-xl overflow-hidden text-xs"></div>
+        </div>
+
+        <!-- Reviews Section -->
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="block text-xs font-semibold uppercase text-gray-400">Reviews</span>
+            <button id="btn-add-review" class="text-xs text-primary font-semibold"><i class="fa-regular fa-comment-dots"></i> Write Review</button>
+          </div>
+          <div id="detail-reviews-list" class="space-y-3"></div>
+        </div>
+      </div>
+
+      <!-- Action Footer (Floating on bottom of detail) -->
+      <div class="absolute bottom-0 left-0 right-0 glass-effect p-4 flex gap-3 border-t border-white/5">
+        <div class="flex items-center bg-white/5 rounded-xl border border-white/10 px-2">
+          <button id="btn-qty-minus" class="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-lg transition"><i class="fa-solid fa-minus text-xs"></i></button>
+          <span id="detail-qty" class="w-8 text-center text-sm font-semibold">1</span>
+          <button id="btn-qty-plus" class="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-lg transition"><i class="fa-solid fa-plus text-xs"></i></button>
+        </div>
+        <button id="btn-add-to-cart" class="flex-1 bg-primary hover:bg-primary/90 text-white font-semibold py-3 rounded-xl transition flex items-center justify-center gap-2"><i class="fa-solid fa-cart-plus"></i> Add to Cart</button>
+        <button id="btn-detail-wish" class="w-12 h-12 flex items-center justify-center glass-effect rounded-xl hover:text-secondary transition"><i class="fa-regular fa-heart"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ORDER INTAKE MODAL (Checkout Details) -->
+  <div id="checkout-modal" class="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="glass-effect p-6 rounded-3xl w-full max-w-md space-y-4">
+      <h3 class="font-display font-bold text-lg">Delivery Information</h3>
+      <div class="space-y-3 text-sm">
+        <div>
+          <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Full Name</label>
+          <input id="checkout-name" type="text" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Phone Number</label>
+          <input id="checkout-phone" type="text" placeholder="01XXXXXXXXX" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Full Delivery Address</label>
+          <textarea id="checkout-address" rows="3" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 focus:outline-none"></textarea>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <button id="btn-submit-order" class="w-full bg-primary py-3 rounded-xl font-semibold">Place Order</button>
+        <button onclick="document.getElementById('checkout-modal').classList.add('hidden')" class="w-1/3 bg-white/5 border border-white/10 py-3 rounded-xl font-semibold">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- WRITE REVIEW MODAL -->
+  <div id="review-modal" class="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="glass-effect p-6 rounded-3xl w-full max-w-md space-y-4">
+      <h3 class="font-display font-bold text-lg">Write a Review</h3>
+      <div class="space-y-3 text-sm">
+        <div>
+          <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Your Name</label>
+          <input id="review-name" type="text" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Rating</label>
+          <div id="star-selector" class="flex gap-1 text-2xl text-amber-400 cursor-pointer">
+            <i class="fa-regular fa-star" data-rating="1"></i>
+            <i class="fa-regular fa-star" data-rating="2"></i>
+            <i class="fa-regular fa-star" data-rating="3"></i>
+            <i class="fa-regular fa-star" data-rating="4"></i>
+            <i class="fa-regular fa-star" data-rating="5"></i>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Review Description</label>
+          <textarea id="review-comment" rows="3" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 focus:outline-none"></textarea>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <button id="btn-submit-review" class="w-full bg-primary py-3 rounded-xl font-semibold">Submit Review</button>
+        <button onclick="document.getElementById('review-modal').classList.add('hidden')" class="w-1/3 bg-white/5 border border-white/10 py-3 rounded-xl font-semibold">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOATING WHATSAPP BUTTON -->
+  <a id="floating-wa-btn" href="#" target="_blank" class="fixed bottom-24 right-4 bg-emerald-500 hover:bg-emerald-600 w-14 h-14 rounded-full flex items-center justify-center text-white text-3xl shadow-lg shadow-emerald-500/20 z-40 pulse-glow hidden">
+    <i class="fa-brands fa-whatsapp"></i>
+  </a>
+
+  <!-- BOTTOM NAVIGATION BAR -->
+  <nav class="glass-effect fixed bottom-3 left-3 right-3 z-40 rounded-2xl flex justify-around py-3 px-2 border border-white/10 max-w-md mx-auto">
+    <button onclick="switchTab('home')" class="nav-btn active flex flex-col items-center gap-1 text-primary hover:text-primary/85 transition" data-tab="home">
+      <i class="fa-solid fa-house text-lg"></i><span class="text-[10px] font-medium">Home</span>
+    </button>
+    <button onclick="switchTab('search')" class="nav-btn flex flex-col items-center gap-1 text-gray-400 hover:text-white transition" data-tab="search">
+      <i class="fa-solid fa-magnifying-glass text-lg"></i><span class="text-[10px] font-medium">Search</span>
+    </button>
+    <button onclick="switchTab('cart')" class="nav-btn relative flex flex-col items-center gap-1 text-gray-400 hover:text-white transition" data-tab="cart">
+      <i class="fa-solid fa-bag-shopping text-lg"></i><span class="text-[10px] font-medium">Cart</span>
+      <span id="nav-cart-badge" class="absolute -top-1 right-2 bg-secondary text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center hidden">0</span>
+    </button>
+    <button onclick="switchTab('wishlist')" class="nav-btn flex flex-col items-center gap-1 text-gray-400 hover:text-white transition" data-tab="wishlist">
+      <i class="fa-solid fa-heart text-lg"></i><span class="text-[10px] font-medium">Wishlist</span>
+    </button>
+    <button onclick="switchTab('contact')" class="nav-btn flex flex-col items-center gap-1 text-gray-400 hover:text-white transition" data-tab="contact">
+      <i class="fa-solid fa-address-book text-lg"></i><span class="text-[10px] font-medium">Contact</span>
+    </button>
+  </nav>
+
+  <!-- TOAST CONTAINER -->
+  <div id="toast-container" class="fixed bottom-28 left-4 right-4 z-50 flex flex-col gap-2 pointer-events-none items-center"></div>
+
+  <!-- SCRIPT -->
+  <script type="module">
+    // Firebase Modular SDK imports via CDN
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+ // Register PWA Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('Service Worker registered!', reg.scope))
+          .catch(err => console.log('Service Worker registration failed: ', err));
+      });
+    }   
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, addDoc, query, where, limit, orderBy } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    let db;
+    let appConfig = null;
+    let productsList = [];
+    let categoriesList = [];
+    let cart = JSON.parse(localStorage.getItem('ritanovera_cart')) || [];
+    let wishlist = JSON.parse(localStorage.getItem('ritanovera_wishlist')) || [];
+    let activeCategory = 'All';
+let deliveryCharge = 60; // ডিফল্ট ব্যাকআপ ডেলিভারি চার্জ
+    let freeDeliveryAbove = 1500; // কত টাকার ওপরে ফ্রি ডেলিভারি
+    let activeProductDetailId = null;
+    let lastDoc = null; // for pagination
+    let currentSelectedRating = 0;
+
+    // Toast Functionality
+    window.showToast = function(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `glass-effect p-3 px-5 rounded-xl text-xs font-semibold flex items-center gap-2 transform translate-y-4 opacity-0 transition duration-300 pointer-events-auto shadow-lg`;
+      
+      const colors = {
+        success: 'text-emerald-400 border-emerald-500/20',
+        error: 'text-red-400 border-red-500/20',
+        warning: 'text-amber-400 border-amber-500/20',
+        info: 'text-sky-400 border-sky-500/20'
+      };
+      
+      const icons = {
+        success: 'fa-circle-check',
+        error: 'fa-triangle-exclamation',
+        warning: 'fa-circle-exclamation',
+        info: 'fa-circle-info'
+      };
+
+      toast.className += ` ${colors[type]}`;
+      toast.innerHTML = `<i class="fa-solid ${icons[type]}"></i> <span>${message}</span>`;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-4', 'opacity-0');
+      }, 50);
+
+      setTimeout(() => {
+        toast.classList.add('translate-y-4', 'opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    };
+
+    // Global load config
+    async function initApp() {
+      // 1. Try config.json
+      try {
+        const res = await fetch('config.json');
+        if (res.ok) {
+          appConfig = await res.json();
+          localStorage.setItem('ritanovera_config', JSON.stringify(appConfig));
+        }
+      } catch (e) {
+        console.log("No dynamic config.json found");
+      }
+
+      // 2. Try LocalStorage
+      if (!appConfig) {
+        const local = localStorage.getItem('ritanovera_config');
+        if (local) appConfig = JSON.parse(local);
+      }
+
+      // If no config, prompt Setup
+      if (!appConfig) {
+        document.getElementById('setup-screen').classList.remove('hidden');
+        return;
+      }
+
+      // Bootstrap Firebase
+      try {
+        const app = initializeApp(appConfig.firebaseConfig);
+        db = getFirestore(app);
+        
+        // ব্যাকগ্রাউন্ডে Firestore থেকে লেটেস্ট কনফিগ সিঙ্ক রাখা (অটো-আপডেট সুবিধা)
+        getDoc(doc(db, "app_settings", "config")).then(configDoc => {
+          if (configDoc.exists()) {
+            const cloudCfg = configDoc.data();
+            const updatedConfig = {
+              firebaseConfig: appConfig.firebaseConfig,
+              imgbbApiKey: cloudCfg.imgbbApiKey || appConfig.imgbbApiKey,
+              whatsappNumber: cloudCfg.whatsappNumber || appConfig.whatsappNumber
+            };
+            localStorage.setItem('ritanovera_config', JSON.stringify(updatedConfig));
+            appConfig = updatedConfig; 
+            updateFloatingWA(); // নতুন হোয়াটসঅ্যাপ নাম্বার থাকলে আপডেট করবে
+          }
+        }).catch(e => console.log("Config sync failed:", e));
+
+        // Load data in sequence
+        await loadBranding();
+        await loadBanners();
+        await loadCategories();
+        await loadProducts();
+        
+        // ফায়ারস্টোর থেকে ডেলিভারি সেটিংস ডাটাবেজ থেকে একবারে লোড করা
+        try {
+          const delivDoc = await getDoc(doc(db, "app_settings", "delivery"));
+          if (delivDoc.exists()) {
+            const del = delivDoc.data();
+            deliveryCharge = del.charge !== undefined ? del.charge : 60;
+            freeDeliveryAbove = del.freeAbove !== undefined ? del.freeAbove : 1500;
+          }
+        } catch(e) {
+          console.log("Failed to load delivery settings:", e);
+        }
+
+        updateFloatingWA();
+        updateCartBadges();
+      } catch (err) {
+        console.error("Firebase init failed", err);
+        showToast("Configuration initialization failed.", "error");
+      }
+    }
+
+    // Load Branding Details
+    async function loadBranding() {
+      try {
+        const brandDoc = await getDoc(doc(db, "app_settings", "branding"));
+        if (brandDoc.exists()) {
+          const brandData = brandDoc.data();
+          document.getElementById('app-name').innerText = brandData.appName || 'RiTanovera';
+          if (brandData.logoUrl) {
+            document.getElementById('app-logo').innerHTML = `<img src="${brandData.logoUrl}" class="w-full h-full object-cover rounded-lg">`;
+          }
+        }
+      } catch (e) {
+        console.log("Error loading branding from cloud. Using fallbacks.");
+      }
+    }
+
+    // Setup action listener
+    document.getElementById('btn-save-setup').addEventListener('click', async () => {
+      const fbStr = document.getElementById('setup-fb-json').value.trim();
+      const imgbb = document.getElementById('setup-imgbb').value.trim();
+      const waNum = document.getElementById('setup-wa').value.trim();
+
+      if (!fbStr || !imgbb || !waNum) {
+        showToast("Please fill all configuration details", "warning");
+        return;
+      }
+      try {
+        const parsedFb = JSON.parse(fbStr);
+        const configData = {
+          firebaseConfig: parsedFb,
+          imgbbApiKey: imgbb,
+          whatsappNumber: waNum
+        };
+        localStorage.setItem('ritanovera_config', JSON.stringify(configData));
+        document.getElementById('setup-screen').classList.add('hidden');
+        location.reload();
+      } catch (e) {
+        showToast("Invalid JSON formatting on Firebase config", "error");
+      }
+    });
+
+    // Load Banners
+    async function loadBanners() {
+      const sliderWrapper = document.getElementById('slider-wrapper');
+      const dotsContainer = document.getElementById('slider-dots');
+      
+      try {
+        const q = query(collection(db, "banners"), where("isActive", "==", true), orderBy("order", "asc"));
+        const snapshot = await getDocs(q);
+        
+        document.getElementById('shimmer-banner').remove();
+        sliderWrapper.innerHTML = '';
+        dotsContainer.innerHTML = '';
+
+        let index = 0;
+        snapshot.forEach(doc => {
+          const banner = doc.data();
+          const element = document.createElement('div');
+          element.className = "min-w-full relative flex-shrink-0 h-full bg-cover bg-center flex items-end p-6 md:p-12";
+          element.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.1), rgba(15,15,26,0.9)), url(${banner.imageUrl})`;
+          element.innerHTML = `
+            <div class="space-y-1">
+              <h2 class="font-display font-bold text-lg md:text-3xl">${banner.title}</h2>
+              <p class="text-xs md:text-sm text-gray-300">${banner.subtitle || ''}</p>
+              ${banner.buttonText ? `<a href="${banner.buttonLink || '#'}" class="inline-block mt-2 bg-primary hover:bg-primary/95 text-white text-xs font-semibold px-4 py-2 rounded-xl transition">${banner.buttonText}</a>` : ''}
+            </div>
+          `;
+          sliderWrapper.appendChild(element);
+
+          // Dot
+          const dot = document.createElement('button');
+          dot.className = `w-2 h-2 rounded-full transition ${index === 0 ? 'bg-primary scale-125' : 'bg-white/30'}`;
+          dot.setAttribute('data-index', index);
+          dotsContainer.appendChild(dot);
+          index++;
+        });
+
+        setupSliderTouch();
+      } catch (err) {
+        console.log("Slider loading error", err);
+      }
+    }
+
+    // Touch support / Gesture and slide routine
+    let currentSlide = 0;
+    function setupSliderTouch() {
+      const wrapper = document.getElementById('slider-wrapper');
+      const dots = document.getElementById('slider-dots').children;
+      const count = wrapper.children.length;
+      if (count <= 1) return;
+
+      let touchStart = 0;
+      let touchEnd = 0;
+
+      wrapper.addEventListener('touchstart', e => { touchStart = e.changedTouches[0].screenX; }, {passive: true});
+      wrapper.addEventListener('touchend', e => { 
+        touchEnd = e.changedTouches[0].screenX; 
+        if (touchStart - touchEnd > 50) {
+          nextSlide();
+        } else if (touchEnd - touchStart > 50) {
+          prevSlide();
+        }
+      }, {passive: true});
+
+      function showSlide(idx) {
+        wrapper.style.transform = `translateX(-${idx * 100}%)`;
+        Array.from(dots).forEach((dot, dIdx) => {
+          dot.className = dIdx === idx ? 'w-2 h-2 rounded-full bg-primary scale-125 transition' : 'w-2 h-2 rounded-full bg-white/30 transition';
+        });
+        currentSlide = idx;
+      }
+
+      function nextSlide() {
+        showSlide((currentSlide + 1) % count);
+      }
+      function prevSlide() {
+        showSlide((currentSlide - 1 + count) % count);
+      }
+
+      setInterval(nextSlide, 4000);
+    }
+
+    // Load Categories
+    async function loadCategories() {
+      const scrollStrip = document.getElementById('categories-strip');
+      const shimmer = document.getElementById('shimmer-categories');
+      try {
+        const q = query(collection(db, "categories"), orderBy("order", "asc"));
+        const snapshot = await getDocs(q);
+        
+        shimmer.remove();
+        scrollStrip.innerHTML = `<button class="category-chip active flex-shrink-0 bg-primary text-white text-xs font-semibold px-4 py-2 rounded-full border border-primary/20 transition" data-category="All">All</button>`;
+        categoriesList = [];
+
+        snapshot.forEach(doc => {
+          const category = doc.data();
+          categoriesList.push({ id: doc.id, ...category });
+          const chip = document.createElement('button');
+          chip.className = "category-chip flex-shrink-0 bg-white/5 text-gray-400 text-xs font-semibold px-4 py-2 rounded-full border border-white/10 transition";
+          chip.setAttribute('data-category', category.name);
+          chip.innerText = category.name;
+          scrollStrip.appendChild(chip);
+        });
+
+        scrollStrip.classList.remove('hidden');
+        setupCategoryListeners();
+      } catch (err) {
+        console.log("Categories loading error", err);
+      }
+    }
+
+    function setupCategoryListeners() {
+      document.querySelectorAll('.category-chip').forEach(chip => {
+        chip.addEventListener('click', (e) => {
+          document.querySelectorAll('.category-chip').forEach(c => {
+            c.classList.remove('bg-primary', 'text-white');
+            c.classList.add('bg-white/5', 'text-gray-400');
+          });
+          e.target.classList.add('bg-primary', 'text-white');
+          e.target.classList.remove('bg-white/5', 'text-gray-400');
+          
+          activeCategory = e.target.getAttribute('data-category');
+          document.getElementById('active-category-indicator').innerText = activeCategory;
+          loadProducts(true);
+        });
+      });
+    }
+
+    // Load Products Grid
+    async function loadProducts(clearGrid = false) {
+      const grid = document.getElementById('products-grid');
+      const shimmer = document.getElementById('shimmer-products');
+      const loadMoreBtn = document.getElementById('btn-load-more');
+
+      if (clearGrid) {
+        grid.innerHTML = '';
+        grid.classList.add('hidden');
+        shimmer.classList.remove('hidden');
+        lastDoc = null;
+      }
+
+      try {
+        let q;
+        if (activeCategory === 'All') {
+          q = query(collection(db, "products"), where("isActive", "==", true), orderBy("createdAt", "desc"), limit(12));
+        } else {
+          q = query(collection(db, "products"), where("isActive", "==", true), where("category", "==", activeCategory), orderBy("createdAt", "desc"), limit(12));
+        }
+
+        const snapshot = await getDocs(q);
+        shimmer.classList.add('hidden');
+        grid.classList.remove('hidden');
+
+        if (snapshot.empty && clearGrid) {
+          grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-500 text-sm">No products found.</div>`;
+          loadMoreBtn.classList.add('hidden');
+          return;
+        }
+
+        snapshot.forEach(doc => {
+          const prod = { id: doc.id, ...doc.data() };
+          productsList.push(prod);
+          renderProductCard(grid, prod);
+        });
+
+        // Simulating single page pagination for demonstration
+        loadMoreBtn.classList.add('hidden'); 
+      } catch (err) {
+        console.error("Products loading error", err);
+      }
+    }
+
+    function renderProductCard(container, prod) {
+      const card = document.createElement('div');
+      card.className = "glass-effect rounded-2xl overflow-hidden p-3 flex flex-col justify-between hover:-translate-y-1 transition duration-300 cursor-pointer relative group";
+      
+      const discountTag = prod.discountPercent > 0 ? `<span class="absolute top-2 left-2 bg-secondary text-white text-[10px] font-bold px-2 py-0.5 rounded-md z-10">${prod.discountPercent}% OFF</span>` : '';
+      const isWish = wishlist.includes(prod.id) ? 'fa-solid text-secondary' : 'fa-regular';
+
+      card.innerHTML = `
+        ${discountTag}
+        <button class="wishlist-toggle absolute top-2 right-2 z-10 w-8 h-8 rounded-full bg-black/40 hover:bg-black/60 flex items-center justify-center text-sm transition" data-id="${prod.id}">
+          <i class="${isWish} fa-heart"></i>
+        </button>
+        <div onclick="openProductDetail('${prod.id}')">
+          <div class="aspect-square rounded-xl overflow-hidden bg-white/5 relative">
+            <img src="${prod.images[0]}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" loading="lazy">
+          </div>
+          <div class="mt-3 space-y-1">
+            <h4 class="font-semibold text-sm line-clamp-2 leading-snug">${prod.name}</h4>
+            <div class="flex items-center gap-1.5 text-xs text-amber-400">
+              <i class="fa-solid fa-star"></i>
+              <span class="font-medium text-white">${prod.rating || '4.5'}</span>
+              <span class="text-[10px] text-gray-500">(${prod.reviewCount || '0'})</span>
+            </div>
+          </div>
+        </div>
+        <div class="mt-3 flex items-center justify-between">
+          <div>
+            <span class="block font-bold text-sm text-primary">৳${prod.price}</span>
+            ${prod.originalPrice ? `<span class="text-[10px] text-gray-400 line-through">৳${prod.originalPrice}</span>` : ''}
+          </div>
+          <button class="quick-add-cart bg-primary hover:bg-primary/90 text-white w-8 h-8 rounded-xl flex items-center justify-center transition shadow-lg shadow-primary/20" data-id="${prod.id}">
+            <i class="fa-solid fa-plus text-xs"></i>
+          </button>
+        </div>
+      `;
+
+      // Event listeners for individual interactions
+      card.querySelector('.wishlist-toggle').addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleWishlist(prod.id, e.currentTarget);
+      });
+
+      card.querySelector('.quick-add-cart').addEventListener('click', (e) => {
+        e.stopPropagation();
+        addToCart(prod, 1);
+      });
+
+      container.appendChild(card);
+    }
+
+    // Toggle Wishlist functionality
+    function toggleWishlist(prodId, element) {
+      const idx = wishlist.indexOf(prodId);
+      const icon = element.querySelector('i');
+      if (idx > -1) {
+        wishlist.splice(idx, 1);
+        icon.className = "fa-regular fa-heart";
+        showToast("Removed from Wishlist", "info");
+      } else {
+        wishlist.push(prodId);
+        icon.className = "fa-solid fa-heart text-secondary";
+        showToast("Added to Wishlist", "success");
+      }
+      localStorage.setItem('ritanovera_wishlist', JSON.stringify(wishlist));
+    }
+
+    // Dynamic Navigation System
+    window.switchTab = function(tabName) {
+      document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.add('hidden');
+      });
+      document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('text-primary');
+        btn.classList.add('text-gray-400');
+        if (btn.getAttribute('data-tab') === tabName) {
+          btn.classList.add('text-primary');
+          btn.classList.remove('text-gray-400');
+        }
+      });
+
+      if (tabName === 'cart') renderCartPage();
+      if (tabName === 'wishlist') renderWishlistPage();
+      if (tabName === 'contact') renderContactPage();
+    };
+
+    // Cart Controller
+    function addToCart(prod, qty) {
+      const existing = cart.find(item => item.id === prod.id);
+      if (existing) {
+        if (existing.quantity + qty > prod.stock) {
+          showToast(`Only ${prod.stock} items left in stock`, "warning");
+          return;
+        }
+        existing.quantity += qty;
+      } else {
+        if (qty > prod.stock) {
+          showToast("Insufficient stock", "warning");
+          return;
+        }
+        cart.push({
+          id: prod.id,
+          name: prod.name,
+          price: prod.price,
+          image: prod.images[0],
+          stock: prod.stock,
+          quantity: qty
+        });
+      }
+      localStorage.setItem('ritanovera_cart', JSON.stringify(cart));
+      updateCartBadges();
+      showToast("Added to Cart successfully", "success");
+    }
+
+    function updateCartBadges() {
+      const count = cart.reduce((acc, item) => acc + item.quantity, 0);
+      const cartBadge = document.getElementById('cart-badge');
+      const navCartBadge = document.getElementById('nav-cart-badge');
+      
+      if (count > 0) {
+        cartBadge.innerText = count;
+        cartBadge.classList.remove('hidden');
+        navCartBadge.innerText = count;
+        navCartBadge.classList.remove('hidden');
+      } else {
+        cartBadge.classList.add('hidden');
+        navCartBadge.classList.add('hidden');
+      }
+    }
+
+    function renderCartPage() {
+      const container = document.getElementById('cart-items-container');
+      const summaryCard = document.getElementById('cart-summary-card');
+      const emptyState = document.getElementById('cart-empty-state');
+
+      container.innerHTML = '';
+      if (cart.length === 0) {
+        summaryCard.classList.add('hidden');
+        emptyState.classList.remove('hidden');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      summaryCard.classList.remove('hidden');
+
+      cart.forEach(item => {
+        const row = document.createElement('div');
+        row.className = "glass-effect p-3 rounded-2xl flex gap-3 items-center justify-between";
+        row.innerHTML = `
+          <div class="flex items-center gap-3">
+            <img src="${item.image}" class="w-16 h-16 rounded-xl object-cover bg-white/5">
+            <div>
+              <h4 class="font-semibold text-xs leading-tight line-clamp-2">${item.name}</h4>
+              <span class="text-xs font-semibold text-primary block mt-1">৳${item.price}</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="flex items-center bg-white/5 rounded-lg border border-white/10 px-1">
+              <button class="cart-qty-minus w-6 h-6 flex items-center justify-center text-xs"><i class="fa-solid fa-minus"></i></button>
+              <span class="cart-qty text-xs font-semibold w-6 text-center">${item.quantity}</span>
+              <button class="cart-qty-plus w-6 h-6 flex items-center justify-center text-xs"><i class="fa-solid fa-plus"></i></button>
+            </div>
+            <button class="cart-remove text-gray-500 hover:text-secondary p-1"><i class="fa-solid fa-trash-can"></i></button>
+          </div>
+        `;
+
+        row.querySelector('.cart-qty-minus').addEventListener('click', () => updateCartQty(item.id, -1));
+        row.querySelector('.cart-qty-plus').addEventListener('click', () => updateCartQty(item.id, 1));
+        row.querySelector('.cart-remove').addEventListener('click', () => removeCartItem(item.id));
+
+        container.appendChild(row);
+      });
+
+      calculateTotals();
+    }
+
+    function updateCartQty(id, diff) {
+      const item = cart.find(i => i.id === id);
+      if (item) {
+        if (item.quantity + diff > item.stock) {
+          showToast(`Cannot exceed stock limit (${item.stock})`, "warning");
+          return;
+        }
+        item.quantity += diff;
+        if (item.quantity <= 0) {
+          removeCartItem(id);
+          return;
+        }
+        localStorage.setItem('ritanovera_cart', JSON.stringify(cart));
+        updateCartBadges();
+        renderCartPage();
+      }
+    }
+
+    function removeCartItem(id) {
+      cart = cart.filter(i => i.id !== id);
+      localStorage.setItem('ritanovera_cart', JSON.stringify(cart));
+      updateCartBadges();
+      renderCartPage();
+    }
+
+    let appliedDiscount = 0;
+    let appliedCouponCode = '';
+
+    function calculateTotals() {
+      const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      
+      // ডাটাবেজ থেকে নিয়ে আসা ডেলিভারি চার্জের ডায়নামিক হিসাব
+      const delivery = subtotal >= freeDeliveryAbove ? 0 : deliveryCharge; 
+      
+      const total = subtotal + delivery - appliedDiscount;
+
+      document.getElementById('summary-subtotal').innerText = `৳${subtotal}`;
+      document.getElementById('summary-delivery').innerText = delivery === 0 ? "FREE" : `৳${delivery}`;
+      document.getElementById('summary-total').innerText = `৳${total}`;
+
+      if (appliedDiscount > 0) {
+        document.getElementById('coupon-row').classList.remove('hidden');
+        document.getElementById('summary-discount').innerText = `-৳${appliedDiscount}`;
+      } else {
+        document.getElementById('coupon-row').classList.add('hidden');
+      }
+    }
+
+    // Coupon logic verification
+    document.getElementById('btn-apply-coupon').addEventListener('click', async () => {
+      const input = document.getElementById('coupon-input').value.trim().toUpperCase();
+      if (!input) return;
+
+      try {
+        const q = query(collection(db, "coupons"), where("code", "==", input), where("isActive", "==", true));
+        const res = await getDocs(q);
+        if (res.empty) {
+          showToast("Coupon invalid or expired.", "error");
+          return;
+        }
+        
+        let couponData = null;
+        res.forEach(doc => couponData = doc.data());
+        
+        const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        if (subtotal < couponData.minOrder) {
+          showToast(`Minimum order of ৳${couponData.minOrder} required`, "warning");
+          return;
+        }
+
+        if (couponData.discountType === 'percent') {
+          appliedDiscount = Math.round((subtotal * couponData.discountValue) / 100);
+        } else {
+          appliedDiscount = couponData.discountValue;
+        }
+
+        appliedCouponCode = input;
+        showToast("Coupon Applied Successfully!", "success");
+        calculateTotals();
+      } catch (err) {
+        showToast("Failed to process Coupon", "error");
+      }
+    });
+
+    // Check out Modal flow triggers
+    document.getElementById('btn-checkout').addEventListener('click', () => {
+      document.getElementById('checkout-modal').classList.remove('hidden');
+    });
+
+    document.getElementById('btn-submit-order').addEventListener('click', async () => {
+      const name = document.getElementById('checkout-name').value.trim();
+      const phone = document.getElementById('checkout-phone').value.trim();
+      const address = document.getElementById('checkout-address').value.trim();
+
+      if (!name || !phone || !address) {
+        showToast("Complete all delivery address forms.", "warning");
+        return;
+      }
+
+      const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      const delivery = subtotal > 1500 ? 0 : 60;
+      const total = subtotal + delivery - appliedDiscount;
+
+      const orderPayload = {
+        customerName: name,
+        phone: phone,
+        address: address,
+        items: cart,
+        subtotal: subtotal,
+        discount: appliedDiscount,
+        couponCode: appliedCouponCode,
+        deliveryCharge: delivery,
+        total: total,
+        status: 'pending',
+        createdAt: new Date().toISOString()
+      };
+
+      try {
+        await addDoc(collection(db, "orders"), orderPayload);
+        
+        // Build formatted WhatsApp message
+        let itemsStr = '';
+        cart.forEach((item, idx) => {
+          itemsStr += `${idx+1}. ${item.name} × ${item.quantity} = ৳${item.price * item.quantity}\n`;
+        });
+
+        const waText = `🛍️ *RiTanovera — New Order*\n\n` +
+          `👤 *Customer:* ${name}\n` +
+          `📞 *Phone:* ${phone}\n` +
+          `🏠 *Address:* ${address}\n\n` +
+          `📦 *Order Items:*\n${itemsStr}\n` +
+          `💰 *Subtotal:* ৳${subtotal}\n` +
+          `🚚 *Delivery:* ৳${delivery === 0 ? "FREE" : delivery}\n` +
+          (appliedDiscount > 0 ? `🎟️ *Coupon (${appliedCouponCode}):* -৳${appliedDiscount}\n` : '') +
+          `✅ *Total: ৳${total}*\n\n` +
+          `_Sent via RiTanovera App_`;
+
+        const finalWaUrl = `https://wa.me/${appConfig.whatsappNumber}?text=${encodeURIComponent(waText)}`;
+        window.open(finalWaUrl, '_blank');
+
+        // Reset App state
+        cart = [];
+        localStorage.removeItem('ritanovera_cart');
+        updateCartBadges();
+        document.getElementById('checkout-modal').classList.add('hidden');
+        switchTab('home');
+        showToast("Order placed successfully!", "success");
+      } catch (err) {
+        showToast("Failed to write order record", "error");
+      }
+    });
+
+    // Wishlist renderer
+    function renderWishlistPage() {
+      const grid = document.getElementById('wishlist-grid');
+      const empty = document.getElementById('wishlist-empty-state');
+      grid.innerHTML = '';
+
+      if (wishlist.length === 0) {
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+
+      wishlist.forEach(async (id) => {
+        // Find existing loaded product or fetch from Firestore
+        let prod = productsList.find(p => p.id === id);
+        if (!prod) {
+          try {
+            const pDoc = await getDoc(doc(db, "products", id));
+            if (pDoc.exists()) {
+              prod = { id: pDoc.id, ...pDoc.data() };
+              renderProductCard(grid, prod);
+            }
+          } catch (e) {}
+        } else {
+          renderProductCard(grid, prod);
+        }
+      });
+    }
+
+    // Contact Panel info bindings (ডায়নামিক সোশ্যাল মিডিয়া ও বিজনেস ইনফো সিস্টেম)
+    async function renderContactPage() {
+      const number = appConfig.whatsappNumber;
+      document.getElementById('contact-wa-link').href = `https://wa.me/${number}`;
+      document.getElementById('contact-wa-num').innerText = `+${number}`;
+      
+      // ডাইনামিক বিজনেস আওয়ার্স ও এড্রেস ফায়ারস্টোর থেকে লোড করা
+      try {
+        const contactDoc = await getDoc(doc(db, "app_settings", "contact"));
+        if (contactDoc.exists()) {
+          const cont = contactDoc.data();
+          document.getElementById('contact-hours').innerText = cont.workingHours || '9:00 AM - 10:00 PM (Daily)';
+          document.getElementById('contact-address').innerText = cont.address || 'Dhaka, Bangladesh';
+        }
+      } catch (e) {
+        console.log("Failed to load business info:", e);
+      }
+      
+      const grid = document.getElementById('social-grid');
+      grid.innerHTML = '<div class="col-span-3 text-center text-xs text-gray-500">Loading social links...</div>';
+      
+      try {
+        const socialDoc = await getDoc(doc(db, "app_settings", "social"));
+        grid.innerHTML = '';
+        
+        if (socialDoc.exists()) {
+          const soc = socialDoc.data();
+          const platforms = [
+            { name: 'Facebook', icon: 'fa-facebook', color: 'bg-blue-600', link: soc.facebook },
+            { name: 'Instagram', icon: 'fa-instagram', color: 'bg-pink-600', link: soc.instagram },
+            { name: 'TikTok', icon: 'fa-tiktok', color: 'bg-black', link: soc.tiktok }
+          ];
+
+          platforms.forEach(platform => {
+            // যদি এডমিন প্যানেলে লিংক দেওয়া থাকে, শুধুমাত্র তখনই সেটি শো করবে
+            if (platform.link) {
+              const item = document.createElement('a');
+              item.href = platform.link;
+              item.target = "_blank";
+              item.className = `flex flex-col items-center justify-center p-3 rounded-2xl ${platform.color}/10 border border-${platform.color}/20 hover:scale-105 transition duration-300`;
+              item.innerHTML = `
+                <i class="fa-brands ${platform.icon} text-lg mb-1"></i>
+                <span class="text-[10px] font-semibold">${platform.name}</span>
+              `;
+              grid.appendChild(item);
+            }
+          });
+
+          if (grid.children.length === 0) {
+            grid.innerHTML = '<div class="col-span-3 text-center text-xs text-gray-500">No social media links configured.</div>';
+          }
+        } else {
+          grid.innerHTML = '<div class="col-span-3 text-center text-xs text-gray-500">No social media links configured.</div>';
+        }
+      } catch (err) {
+        grid.innerHTML = '<div class="col-span-3 text-center text-xs text-red-400">Failed to load social links.</div>';
+      }
+    }
+
+    // Global Floating WhatsApp
+    function updateFloatingWA() {
+      const floatBtn = document.getElementById('floating-wa-btn');
+      floatBtn.href = `https://wa.me/${appConfig.whatsappNumber}`;
+      floatBtn.classList.remove('hidden');
+    }
+
+    // PRODUCT DETAIL OVERLAY HANDLERS
+    window.openProductDetail = async function(id) {
+      activeProductDetailId = id;
+      const panel = document.getElementById('product-detail-panel');
+      const prod = productsList.find(p => p.id === id);
+      if (!prod) return;
+
+      document.getElementById('detail-name').innerText = prod.name;
+      document.getElementById('detail-desc').innerText = prod.description;
+      document.getElementById('detail-price').innerText = `৳${prod.price}`;
+      
+      if (prod.originalPrice) {
+        document.getElementById('detail-orig-price').innerText = `৳${prod.originalPrice}`;
+        document.getElementById('detail-orig-price').classList.remove('hidden');
+      } else {
+        document.getElementById('detail-orig-price').classList.add('hidden');
+      }
+
+      if (prod.discountPercent) {
+        document.getElementById('detail-discount-badge').innerText = `${prod.discountPercent}% OFF`;
+        document.getElementById('detail-discount-badge').classList.remove('hidden');
+      } else {
+        document.getElementById('detail-discount-badge').classList.add('hidden');
+      }
+
+      const stockBadge = document.getElementById('detail-stock-badge');
+      if (prod.stock > 5) {
+        stockBadge.innerText = 'In Stock';
+        stockBadge.className = 'text-xs px-2.5 py-0.5 rounded-full font-semibold bg-emerald-500/10 text-emerald-400';
+      } else if (prod.stock > 0) {
+        stockBadge.innerText = 'Low Stock';
+        stockBadge.className = 'text-xs px-2.5 py-0.5 rounded-full font-semibold bg-amber-500/10 text-amber-400';
+      } else {
+        stockBadge.innerText = 'Out of Stock';
+        stockBadge.className = 'text-xs px-2.5 py-0.5 rounded-full font-semibold bg-red-500/10 text-red-400';
+      }
+
+      // Load specifications if present
+      const specsSection = document.getElementById('detail-specs-section');
+      const specsTable = document.getElementById('detail-specs-table');
+      specsTable.innerHTML = '';
+      if (prod.specifications && Object.keys(prod.specifications).length > 0) {
+        specsSection.classList.remove('hidden');
+        Object.entries(prod.specifications).forEach(([key, value]) => {
+          const specRow = document.createElement('div');
+          specRow.className = "flex border-b border-white/5 last:border-0";
+          specRow.innerHTML = `
+            <div class="w-1/3 bg-white/5 p-2 font-medium text-gray-400">${key}</div>
+            <div class="w-2/3 p-2 text-gray-200">${value}</div>
+          `;
+          specsTable.appendChild(specRow);
+        });
+      } else {
+        specsSection.classList.add('hidden');
+      }
+
+      // Load Slider Gallery
+      const sliderWrapper = document.getElementById('detail-slider-wrapper');
+      sliderWrapper.innerHTML = '';
+      prod.images.forEach(img => {
+        const slide = document.createElement('div');
+        slide.className = "min-w-full h-full relative flex-shrink-0";
+        slide.innerHTML = `<img src="${img}" class="w-full h-full object-cover">`;
+        sliderWrapper.appendChild(slide);
+      });
+
+      // Gallery Thumbnails
+      const thumbs = document.getElementById('detail-thumbnails');
+      thumbs.innerHTML = '';
+      prod.images.forEach((img, idx) => {
+        const th = document.createElement('button');
+        th.className = `w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 border-2 ${idx === 0 ? 'border-primary' : 'border-transparent'}`;
+        th.innerHTML = `<img src="${img}" class="w-full h-full object-cover">`;
+        th.addEventListener('click', () => {
+          sliderWrapper.style.transform = `translateX(-${idx * 100}%)`;
+          document.getElementById('detail-slider-indicator').innerText = `${idx + 1}/${prod.images.length}`;
+          Array.from(thumbs.children).forEach((el, elIdx) => {
+            el.className = elIdx === idx ? 'w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 border-2 border-primary' : 'w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 border-2 border-transparent';
+          });
+        });
+        thumbs.appendChild(th);
+      });
+
+      document.getElementById('detail-slider-indicator').innerText = `1/${prod.images.length}`;
+
+      // Reset Quantities
+      document.getElementById('detail-qty').innerText = "1";
+
+      // Render Dynamic Wishlist button inside detailed page
+      const wishBtn = document.getElementById('btn-detail-wish');
+      wishBtn.innerHTML = wishlist.includes(prod.id) ? `<i class="fa-solid fa-heart text-secondary text-lg"></i>` : `<i class="fa-regular fa-heart text-lg"></i>`;
+      
+      // Open Slide
+      panel.classList.remove('translate-y-full');
+    };
+
+    window.closeProductDetail = function() {
+      document.getElementById('product-detail-panel').classList.add('translate-y-full');
+    };
+
+    // Detail Action Handlers
+    document.getElementById('btn-qty-minus').addEventListener('click', () => {
+      const el = document.getElementById('detail-qty');
+      let val = parseInt(el.innerText);
+      if (val > 1) el.innerText = val - 1;
+    });
+
+    document.getElementById('btn-qty-plus').addEventListener('click', () => {
+      const el = document.getElementById('detail-qty');
+      const prod = productsList.find(p => p.id === activeProductDetailId);
+      let val = parseInt(el.innerText);
+      if (prod && val < prod.stock) {
+        el.innerText = val + 1;
+      } else {
+        showToast("Cannot exceed available stock limit", "warning");
+      }
+    });
+
+    document.getElementById('btn-add-to-cart').addEventListener('click', () => {
+      const prod = productsList.find(p => p.id === activeProductDetailId);
+      const qty = parseInt(document.getElementById('detail-qty').innerText);
+      if (prod) {
+        addToCart(prod, qty);
+        closeProductDetail();
+      }
+    });
+
+    // Write dynamic Reviews system
+    document.getElementById('btn-add-review').addEventListener('click', () => {
+      document.getElementById('review-modal').classList.remove('hidden');
+    });
+
+    // Review Stars selector UI binder
+    document.querySelectorAll('#star-selector i').forEach(star => {
+      star.addEventListener('click', (e) => {
+        const rating = parseInt(e.target.getAttribute('data-rating'));
+        currentSelectedRating = rating;
+        
+        document.querySelectorAll('#star-selector i').forEach((s, idx) => {
+          if (idx < rating) {
+            s.className = "fa-solid fa-star";
+          } else {
+            s.className = "fa-regular fa-star";
+          }
+        });
+      });
+    });
+
+    document.getElementById('btn-submit-review').addEventListener('click', async () => {
+      const name = document.getElementById('review-name').value.trim();
+      const comment = document.getElementById('review-comment').value.trim();
+
+      if (!name || !comment || currentSelectedRating === 0) {
+        showToast("All fields are required for review", "warning");
+        return;
+      }
+
+      const payload = {
+        reviewerName: name,
+        rating: currentSelectedRating,
+        comment: comment,
+        createdAt: new Date().toISOString(),
+        isApproved: true // Direct auto-approval config
+      };
+
+      try {
+        await addDoc(collection(db, "products", activeProductDetailId, "reviews"), payload);
+        showToast("Review submitted successfully", "success");
+        document.getElementById('review-modal').classList.add('hidden');
+        
+        // Reset inputs
+        document.getElementById('review-name').value = '';
+        document.getElementById('review-comment').value = '';
+        currentSelectedRating = 0;
+        document.querySelectorAll('#star-selector i').className = 'fa-regular fa-star';
+      } catch (err) {
+        showToast("Failed submitting review", "error");
+      }
+    });
+
+    // Run dynamic client-side filtering on cached list in memory
+    const searchInput = document.getElementById('search-input');
+    searchInput.addEventListener('input', debounce(() => {
+      const queryStr = searchInput.value.toLowerCase().trim();
+      const resultsGrid = document.getElementById('search-results-grid');
+      const stats = document.getElementById('search-stats');
+
+      if (!queryStr) {
+        resultsGrid.innerHTML = '';
+        document.getElementById('btn-clear-search').classList.add('hidden');
+        stats.innerText = "Type above to search...";
+        return;
+      }
+
+      document.getElementById('btn-clear-search').classList.remove('hidden');
+
+      const matches = productsList.filter(p => 
+        p.name.toLowerCase().includes(queryStr) || 
+        p.category.toLowerCase().includes(queryStr) ||
+        (p.tags && p.tags.some(tag => tag.toLowerCase().includes(queryStr)))
+      );
+
+      resultsGrid.innerHTML = '';
+      stats.innerText = `Found ${matches.length} matching products`;
+
+      if (matches.length === 0) {
+        resultsGrid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-500 text-sm">No items match your search.</div>`;
+        return;
+      }
+
+      matches.forEach(prod => {
+        renderProductCard(resultsGrid, prod);
+      });
+    }, 300));
+
+    document.getElementById('btn-clear-search').addEventListener('click', () => {
+      searchInput.value = '';
+      document.getElementById('search-results-grid').innerHTML = '';
+      document.getElementById('btn-clear-search').classList.add('hidden');
+      document.getElementById('search-stats').innerText = "Type above to search...";
+    });
+
+    function debounce(func, wait) {
+      let timeout;
+      return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+      };
+    }
+
+    // Initialize application on page load
+    window.addEventListener('DOMContentLoaded', initApp);
+  </script>
+</body>
+</html>
