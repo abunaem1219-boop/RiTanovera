@@ -85,7 +85,7 @@
 <body class="pb-24 overflow-x-hidden min-h-screen">
 
   <!-- APP BAR / HEADER -->
-  <header class="glass-effect sticky top-0 z-40 px-4 py-3 flex items-center justify-between mx-3 mt-3 rounded-2xl">
+  <header id="app-header" class="glass-effect sticky top-0 z-40 px-4 py-3 flex items-center justify-between mx-3 mt-3 rounded-2xl transition-transform duration-300">
     <div class="flex items-center gap-2">
       <div id="app-logo" class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center font-display font-bold text-white text-lg">R</div>
       <span id="app-name" class="font-display font-bold text-lg tracking-wide">RiTanovera</span>
@@ -406,12 +406,12 @@
   </div>
 
   <!-- FLOATING WHATSAPP BUTTON -->
-  <a id="floating-wa-btn" href="#" target="_blank" class="fixed bottom-24 right-4 bg-emerald-500 hover:bg-emerald-600 w-14 h-14 rounded-full flex items-center justify-center text-white text-3xl shadow-lg shadow-emerald-500/20 z-40 pulse-glow hidden">
+  <a id="floating-wa-btn" href="#" target="_blank" class="fixed bottom-24 right-4 bg-emerald-500 hover:bg-emerald-600 w-14 h-14 rounded-full flex items-center justify-center text-white text-3xl shadow-lg shadow-emerald-500/20 z-40 pulse-glow hidden transition-transform duration-300">
     <i class="fa-brands fa-whatsapp"></i>
   </a>
 
   <!-- BOTTOM NAVIGATION BAR -->
-  <nav class="glass-effect fixed bottom-3 left-3 right-3 z-40 rounded-2xl flex justify-around py-3 px-2 border border-white/10 max-w-md mx-auto">
+  <nav id="bottom-nav" class="glass-effect fixed bottom-3 left-3 right-3 z-40 rounded-2xl flex justify-around py-3 px-2 border border-white/10 max-w-md mx-auto transition-transform duration-300">
     <button onclick="switchTab('home')" class="nav-btn active flex flex-col items-center gap-1 text-primary hover:text-primary/85 transition" data-tab="home">
       <i class="fa-solid fa-house text-lg"></i><span class="text-[10px] font-medium">Home</span>
     </button>
@@ -1433,6 +1433,32 @@ let deliveryCharge = 60; // ডিফল্ট ব্যাকআপ ডেল�
 
     // Initialize application on page load
     window.addEventListener('DOMContentLoaded', initApp);
+
+    // Smart Scroll (Hide/Show Header, Nav & WhatsApp Button on Scroll)
+    let lastScrollY = window.scrollY;
+    const header = document.getElementById('app-header');
+    const bottomNav = document.getElementById('bottom-nav');
+    const waBtn = document.getElementById('floating-wa-btn');
+
+    window.addEventListener('scroll', () => {
+      const currentScrollY = window.scrollY;
+      
+      // আইফোনের স্ক্রোল বাউন্স ইফেক্টের কারণে নেগেটিভ স্ক্রোল ভ্যালুগুলো ইগনোর করবে
+      if (currentScrollY < 0) return;
+
+      if (currentScrollY > lastScrollY && currentScrollY > 80) {
+        // নিচের দিকে স্ক্রোল করলে - বারগুলো স্ক্রিনের বাইরে লুকিয়ে যাবে (Slide Out)
+        header.style.transform = 'translateY(-130%)';
+        bottomNav.style.transform = 'translateY(160%)';
+        if (waBtn) waBtn.style.transform = 'translateY(120px)';
+      } else {
+        // ওপরের দিকে স্ক্রোল করলে - বারগুলো আবার ফিরে আসবে (Slide In)
+        header.style.transform = 'translateY(0)';
+        bottomNav.style.transform = 'translateY(0)';
+        if (waBtn) waBtn.style.transform = 'translateY(0)';
+      }
+      lastScrollY = currentScrollY;
+    }, { passive: true });
   </script>
 </body>
 </html>
